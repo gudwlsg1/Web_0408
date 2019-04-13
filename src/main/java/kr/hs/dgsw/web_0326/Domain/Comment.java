@@ -21,6 +21,8 @@ public class Comment {
 
     private Long userId;
     private String content;
+    private String stroedPath;
+    private String originalName;
 
     @CreationTimestamp
     private LocalDateTime created;
@@ -31,6 +33,14 @@ public class Comment {
         this.userId = userId;
         this.content = content;
     }
+
+    public Comment(Long userId, String content, String stroedPath, String originalName){
+        this.userId = userId;
+        this.content = content;
+        this.stroedPath = stroedPath;
+        this.originalName = originalName;
+    }
+
 
     public Comment(Comment c){
         this.id = c.getId();

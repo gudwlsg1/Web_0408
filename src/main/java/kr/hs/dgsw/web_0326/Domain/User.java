@@ -22,6 +22,7 @@ public class User {
 
     private String name;
     private String email;
+    private String password;
     private String stroedPath;
     private String originalName;
 
@@ -30,8 +31,22 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime modified;
 
-    public User(String name, String email){
+    public User(String userId, String password){
+        this.name = userId;
+        this.password = password;
+    }
+
+    public User(String name, String email, String password){
         this.name = name;
         this.email = email;
+        this.password = password;
+    }
+
+    public User(String name, String email, String password, String storedPath, String originalName){
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.stroedPath = storedPath;
+        this.originalName = originalName;
     }
 }

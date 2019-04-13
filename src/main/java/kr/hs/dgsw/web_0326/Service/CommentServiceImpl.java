@@ -23,7 +23,7 @@ public class CommentServiceImpl implements CommentService{
 
     @PostConstruct
     private void init(){
-        User user = this.userRepository.save(new User("aaa","aaa@dgsw.hs.kr"));
+        User user = this.userRepository.save(new User("aaa","aaa@dgsw.hs.kr","1234","D:/school/3Grade/web/web_0326/upload/2019/04/13/e5057064-61e5-4706-9767-99670cf58863_3.jpg","3.jpg"));
         this.commentRepository.save(new Comment(user.getId(),"Hi there 인사해 호들갑 없이"));
         this.commentRepository.save(new Comment(user.getId(),"시작해요 서론 없이"));
         this.commentRepository.save(new Comment(user.getId(),"스킨십은 사양할게요"));
@@ -76,6 +76,8 @@ public class CommentServiceImpl implements CommentService{
         return this.commentRepository.findById(id)
                 .map( f -> {
                             f.setContent(Optional.ofNullable(comment.getContent()).orElse(f.getContent()));
+                            f.setStroedPath(Optional.ofNullable(comment.getStroedPath()).orElse(f.getStroedPath()));
+                            f.setOriginalName(Optional.ofNullable(comment.getOriginalName()).orElse(f.getOriginalName()));
                             return this.commentRepository.save(f);
                         }).orElse(null);
     }

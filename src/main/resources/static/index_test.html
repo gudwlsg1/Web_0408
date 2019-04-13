@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>데이터 가져오기</title>
+    <script
+            src="http://code.jquery.com/jquery-3.3.1.min.js"
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+            crossorigin="anonymous"></script>
+</head>
+<body>
+
+
+    <div id="display" style="width: 400px">
+        <input id="content" placeholder="내용">
+        <button onclick="send()">확인</button>
+        <div>
+            <input type="file" id="uploadFile" >
+            <button onclick="uploadFile()">파일업로드</button>
+        </div>
+        <h2>Content</h2>
+
+    </div>
+    <br><br>
+
+    <div id="user" style="width: 400px;">
+        <div>
+            <h2>User</h2>
+            <input id="userName" placeholder="이름">
+            <input id="userEmail" placeholder="이메일">
+            <input type="file" id="uploadImage" >
+            <button onclick="addUser()">확인</button>
+            <input id="fileInput" type="file" style="display:none;" />
+        </div>
+        <br>
+    </div>
+    <script>
+
+        async function uploadFile(){
+            try {
+                let file = $('#uploadFile')[0].files[0];
+                let formData = new FormData();
+                formData.append("uploadFile",file);
+
+                let response  = await $.ajax({
+                    type : "POST",
+                    data : formData,
+                    url : "/attachment",
+                    processData : false,
+                    contentType : false
+                });
+
+                console.log(JSON.stringify(response));
+            }catch(err){
+                console.log(JSON.stringify(err));
+            }
+        }
+
+        $(document).ready(initData());
+
+        function initData() {
+            getComment();
+            getUser();
+        }
+
+        function deleteComment(btn ,id) {
+            if($(btn).text() === "삭제"){
+                $(btn).prev().text('삭제');
+                $(btn).text("취소");
+            }else {
+                    $(btn).prev().text('수정');
+                    $(btn).text("삭제");
+
+                    let child = $(`#child${id}`);
+                    child.find('div:nth-child(2)').html(content);
+            }
+        }
+        let content;
+        function updateComment(btn, id) {
+            if($(btn).text() === "수정"){
+                let child = $(`#child${id}`);
+                content = child.find('div:nth-child(2)').html();
+                let input = `<input id="input${id}" value="${content}">`;
+                child.find('div:nth-child(2)').html(input);
+
+                $(btn).text('확인');
+                $(btn).next().text("취소");
+
+            } else {
+                if($(btn).text() === "확인"){
+                    let text = $(`#input${id}`).val();
+                    let data = {
+                        content : text
+                    };
+                    $.ajax({
+                        type : "PUT",
+                        url : "/list/" + id,
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        data : JSON.stringify(data),
+                        dataType : "JSON",
+                        error :  function (err) {
+                            console.log(err)
+                        },
+                        success : function () {
+                            let child = $(`#child${id}`);
+                            child.find('div:nth-child(2)').html(text);
+
+                            $(btn).text('수정');
+                            $(btn).next().text("삭제");
+                        }
+                    })
+                } else {
+                    $.ajax({
+                        type : "DELETE",
+                        url : "/list/" + id,
+                        error :  function (err) {
+                            console.log(err)
+                        },
+                        success :  function (response) {
+                            let childId = "child" + id;
+
+                            let child = document.getElementById(childId);
+                            if(child != null){
+                                child.remove();
+                            }
+                        }
+                    })
+
+                    $(btn).text('수정');
+                    $(btn).next().text("삭제");
+                }
+            }
+        }
+
+        function setDisplay(data) {
+            $("#display").append(`
+                            <div id="child${data.id}" style="display : flex; border-bottom: 1px solid silver; width: max-content;">
+                            <div style="width: 150px;">${data.username} </div>
+                            <div id="content${data.id}" style="width: 350px;"> ${data.content}</div>
+                            <div style="width: 400px"> <button onclick="updateComment(this,${data.id})">수정</button>
+                            <button onclick="deleteComment(this, ${data.id})">삭제</button></div>
+                            </div>`
+            );
+        }
+
+        async function getComment(){
+            $.ajax({
+                type :"GET",
+                url:"/list",
+                async : true,
+                success : await function (response){
+                    for(let i = 0; i < response.length; i++){
+                        let comment = response[i];
+                        setDisplay(comment);
+                    }
+                },
+                error: await function (error) {
+                    console.log(JSON.stringify(error));
+                }
+            })
+        }
+
+
+
+
+        async function getUser(){
+            $.ajax({
+                type :"GET",
+                url:"/user",
+                async : true,
+                success : await function (response){
+                    for(let i = 0; i < response.length; i++){
+                        let user = response[i];
+                        setUser(user);
+                    }
+                },
+                error: await function (error) {
+                    console.log(JSON.stringify(error));
+                }
+            })
+        }
+
+        async function addUser(){
+            let image;
+
+            try {
+                let file = $('#uploadImage')[0].files[0];
+                console.log(file);
+                let formData = new FormData();
+                formData.append("uploadFile",file);
+
+                image  = await $.ajax({
+                    type : "POST",
+                    data : formData,
+                    url : "/attachment",
+                    processData : false,
+                    contentType : false
+                });
+
+            }catch(err){
+                console.log(JSON.stringify(err) + "err");
+                alert("사진을 선택해주세요!");
+                return;
+            }
+
+            let data = {
+                name : $("#userName").val(),
+                email : $("#userEmail").val(),
+                stroedPath : image.stroedPath,
+                originalName : image.originalName
+            };
+
+            $.ajax({
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                type: "POST",
+                url: "/user",
+                data : JSON.stringify(data),
+                dataType : "JSON",
+                success: await function (response) {
+                    setUser(response)
+                },
+                error: await function(err){
+                    console.log(err);
+                }
+            });
+        }
+
+        function deleteUser(button, id){
+            if($(button).text() === "삭제"){
+                $(button).prev().text('확인');
+                $(button).text("취소");
+            }else {
+                    $(button).prev().text('수정');
+                    $(button).text("삭제");
+            }
+        }
+
+        async function updateUser(button, id) {
+            let image;
+
+            if ($(button).text().trim() === "수정") {
+                //프로필 수정
+            } else if($(button).text() === "확인"){
+                $.ajax({
+                    type: "DELETE",
+                    url: "/user/" + id,
+                    error: function (err) {
+                        console.log(err)
+                    },
+                    success: function () {
+                        let user = $(`#user${id}`);
+                        user.remove();
+
+                        $(button).text('수정');
+                        $(button).next().text("삭제");
+                    }
+                })
+            }
+        }
+
+        async function modifiedImg(id) {
+            await document.getElementById('fileInput').click();
+            $($("#fileInput")).change(async function () {
+                try {
+                    let file = $('#fileInput')[0].files[0];
+                    let formData = new FormData();
+                    formData.append('uploadFile', file);
+
+                    let response  = await $.ajax({
+                        type : "POST",
+                        data : formData,
+                        url : "/attachment",
+                        processData : false,
+                        contentType : false
+                    });
+
+                    let data = {
+                        stroedPath: response.stroedPath,
+                        originalName: response.originalName
+                    };
+
+                    await $.ajax({
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        type: "PUT",
+                        url: "/user/" + id,
+                        data : JSON.stringify(data),
+                        dataType : "JSON",
+                        success: await function (response) {
+                            console.log(response)
+                        },
+                        error: await function(err){
+                            console.log(err);
+                        }
+                    });
+
+
+                } catch (err) {
+                    console.error(JSON.stringify(err));
+                }
+            })
+
+        }
+
+
+        function setUser(data) {
+            console.log(data);
+            console.log(data.stroedPath);
+            $("#user").append(`
+                            <div id="user${data.id}" style="display : flex; border-bottom: 1px solid silver; width: max-content;">
+                            <div style="width: 150px;">${data.name} </div>
+                            <div style="width: 350px;"> ${data.email}</div>
+                            <div style="width: 400px"> <button onclick="updateUser(this,${data.id})">수정</input>
+                            <button onclick="deleteUser(this, ${data.id})">삭제</button></div>
+                            <button onclick="modifiedImg(${data.id})">사진수정</button>
+                            </div>`
+            );
+        }
+
+
+        async function send() {
+            let content = $("#content").val();
+
+            if(content === ""){
+                alert("입력하세요");
+                return;
+            }
+
+            let data = {
+                userId : 1,
+                content : content
+            };
+
+            $.ajax({
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                type: "POST",
+                url: "/list",
+                data : JSON.stringify(data),
+                dataType : "JSON",
+                success: await function (response) {
+                    setDisplay(response)
+                },
+                error: await function(err){
+                    console.log(err);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

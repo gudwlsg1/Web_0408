@@ -21,7 +21,7 @@ public class UserServiceImpl implements UserService{
             return null;
         }
 
-        if(user.getName() == "" || user.getEmail() == ""){
+        if(user.getName().equals("") || user.getEmail().equals("")){
             return null;
         }
 
@@ -44,6 +44,7 @@ public class UserServiceImpl implements UserService{
        return this.userRepository.findById(userId)
                .map(f -> {
                     f.setName(Optional.ofNullable(user.getName()).orElse(f.getName()));
+                    f.setPassword(Optional.ofNullable(user.getPassword()).orElse(f.getPassword()));
                     f.setEmail(Optional.ofNullable(user.getEmail()).orElse(f.getEmail()));
                     f.setStroedPath(Optional.ofNullable(user.getStroedPath()).orElse(f.getStroedPath()));
                     f.setOriginalName(Optional.ofNullable(user.getOriginalName()).orElse(f.getOriginalName()));
@@ -60,5 +61,10 @@ public class UserServiceImpl implements UserService{
         }catch (Exception e){
             return false;
         }
+    }
+
+    @Override
+    public User Login(User user) {
+        return this.userRepository.findByNameAndPassword(user.getName(), user.getPassword()).orElse(null);
     }
 }

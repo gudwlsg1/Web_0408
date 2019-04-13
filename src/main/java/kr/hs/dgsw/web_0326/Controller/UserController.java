@@ -23,6 +23,12 @@ public class UserController {
         return this.userService.getUser(userId);
     }
 
+    @GetMapping("/login/{userId}/{password}")
+    public User Login(@PathVariable String userId, @PathVariable String password){
+        User user = new User(userId, password);
+        return this.userService.Login(user);
+    }
+
     @PostMapping("/user")
     public User addUser(@RequestBody User user){
        return this.userService.addUser(user);
